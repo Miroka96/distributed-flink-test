@@ -28,6 +28,7 @@ object WordCount {
     val windowCounts = text
           .flatMap { w => w.split("\\s") }
           .map { w => WordWithCount(w.toLowerCase().replaceAll("[^A-Za-z]", ""), 1)}
+          .filter(w => w.word != "")
           .keyBy("word")
 
         .timeWindow(Time.days(1)).sum(1)
