@@ -23,8 +23,8 @@ object WordCount {
 
 
       val params = ParameterTool.fromArgs(args)
-      val inputFile = params.get("input")
-      val outputFile = params.get("output")
+      val inputFile = params.get("input", "tolstoy-war-and-peace.txt")
+      val outputFile = params.get("output", "count")
 
 
     
@@ -32,12 +32,11 @@ object WordCount {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
 
     // get input data by connecting to the socket
-    val text: DataStream[String] = env.socketTextStream(hostname, port, '\n')
-    val textStream = env.readFromFile(inputFile)
+    val text = env.readTextFile(inputFile)
     // parse the data, group it, window it, and aggregate the counts 
     val windowCounts = text
           .flatMap { w => w.split("\\s") }
-          .map { w => WordWithCount(w, 1)}
+          .map { w => WordWithCount(w.toLowerCase(), 1)}
           .keyBy("word")
           .sum("count")
 
