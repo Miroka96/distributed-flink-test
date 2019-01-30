@@ -6,3 +6,5 @@
 .idea/
 distributed-flink-test.iml
 target/
+*.csv
+dependency-reduced-pom.xml
