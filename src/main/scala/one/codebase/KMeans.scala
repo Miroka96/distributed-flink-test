@@ -7,6 +7,9 @@ import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala._
 
+import scala.collection.JavaConverters._
+
+
 /**
  * This example implements a basic K-Means clustering algorithm.
  *
@@ -94,34 +97,21 @@ object KMeans {
   // *************************************************************************
 
   def getCentroidDataSet(params: ParameterTool, env: ExecutionEnvironment): DataSet[Centroid] = {
-    if (params.has("centroids")) {
+
       env.readCsvFile[Centroid](
         params.get("centroids"),
         fieldDelimiter = " ",
         includedFields = Array(0, 1, 2))
-    } else {
-      println("Executing K-Means example with default centroid data set.")
-      println("Use --centroids to specify file input.")
-      env.fromCollection(KMeansData.CENTROIDS map {
-        case Array(id, x, y) =>
-          new Centroid(id.asInstanceOf[Int], x.asInstanceOf[Double], y.asInstanceOf[Double])
-      })
-    }
+
   }
 
   def getPointDataSet(params: ParameterTool, env: ExecutionEnvironment): DataSet[Point] = {
-    if (params.has("points")) {
-      env.readCsvFile[Point](
+
+    env.readCsvFile[Point](
         params.get("points"),
         fieldDelimiter = " ",
         includedFields = Array(0, 1))
-    } else {
-      println("Executing K-Means example with default points data set.")
-      println("Use --points to specify file input.")
-      env.fromCollection(KMeansData.POINTS map {
-        case Array(x, y) => new Point(x.asInstanceOf[Double], y.asInstanceOf[Double])
-      })
-    }
+
   }
 
   // *************************************************************************
@@ -184,7 +174,7 @@ object KMeans {
   /** Determines the closest cluster center for a data point. */
   @ForwardedFields(Array("*->_2"))
   final class SelectNearestCenter extends RichMapFunction[Point, (Int, Point)] {
-    private var centroids: Traversable[Centroid] = null
+    private var centroids: Traversable[Centroid] = _
 
     /** Reads the centroid values from a broadcast variable into a collection. */
     override def open(parameters: Configuration) {
@@ -194,7 +184,7 @@ object KMeans {
     def map(p: Point): (Int, Point) = {
       var minDistance: Double = Double.MaxValue
       var closestCentroidId: Int = -1
-      for (centroid <- centroids) {
+      for (centroid: Centroid <- centroids) {
         val distance = p.euclideanDistance(centroid)
         if (distance < minDistance) {
           minDistance = distance
@@ -206,3 +196,4 @@ object KMeans {
 
   }
 }
+
