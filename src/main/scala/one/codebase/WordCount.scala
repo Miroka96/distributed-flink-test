@@ -14,7 +14,7 @@ object WordCount {
 
       val params = ParameterTool.fromArgs(args)
       val inputFile = params.get("input", "tolstoy-war-and-peace.txt")
-      val outputFile = params.get("output", "count")
+      val outputFile = params.get("output", "count.csv")
 
 
     
@@ -32,6 +32,7 @@ object WordCount {
           .keyBy("word")
 
         .timeWindow(Time.days(1)).sum(1)
+    windowCounts.writeAsCsv(outputFile).setParallelism(1)
 
     // print the results with a single thread, rather than in parallel
     windowCounts.print().setParallelism(1)
