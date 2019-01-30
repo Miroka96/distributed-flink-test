@@ -5,3 +5,4 @@
 
 .idea/
 distributed-flink-test.iml
+target/

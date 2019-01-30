@@ -1,21 +1,11 @@
 package one.codebase
 
 import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.streaming.api.scala._
 
-/**
- * Implements a streaming windowed version of the "WordCount" program.
- *
- * This program connects to a server socket and reads strings from the socket.
- * The easiest way to try this out is to open a text sever (at port 12345)
- * using the ''netcat'' tool via
- * {{{
- * nc -l 12345
- * }}}
- * and run this example with the hostname and the port as arguments..
- */
+
 object WordCount {
 
   /** Main program method */
@@ -30,6 +20,7 @@ object WordCount {
     
     // get the execution environment
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime)
 
     // get input data by connecting to the socket
     val text = env.readTextFile(inputFile)
@@ -38,7 +29,8 @@ object WordCount {
           .flatMap { w => w.split("\\s") }
           .map { w => WordWithCount(w.toLowerCase(), 1)}
           .keyBy("word")
-          .sum("count")
+
+        .timeWindow(Time.days(1)).sum(1)
 
     // print the results with a single thread, rather than in parallel
     windowCounts.print().setParallelism(1)
