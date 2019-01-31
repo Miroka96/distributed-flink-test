@@ -9,6 +9,7 @@ import org.apache.flink.core.fs.FileSystem
 import org.apache.flink.streaming.api.scala._
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 /**
@@ -56,29 +57,24 @@ object KMeans {
     val params: ParameterTool = ParameterTool.fromArgs(args)
     val input = params.get("input", "berlin.csv")
     val iterations = params.getInt("iterations", 10)
-    val mnc = params.get("mnc", "").split(",").flatMap {
-      case "" => List()
-      case x: String => List(x.toInt)
-      case _ => List()
+    val mnc = params.get("mnc", "").split(",").flatMap { x: String =>
+      Try {
+        x.toInt
+      }.toOption
     }
     var k = params.getInt("k",0)
     val output = params.get("output", "clusters.csv")
 
     // set up execution environment
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(4)
+
     val cellTowers = env.readCsvFile[CellTowerData](input, ignoreFirstLine = true)
 
-    // Todo: Exercise says mnc but data has mcc
     val mncFilteredTowers = cellTowers.filter(x => if (mnc.nonEmpty) mnc.contains(x.net) else true)
     val nonLTETowers = mncFilteredTowers.filter(t => t.radio != "LTE")
     val lteTowers = mncFilteredTowers.filter(t => t.radio == "LTE")
     k = if (k==0) lteTowers.count().toInt else k
 
-    // get input data:
-    // read the points and centroids from the provided paths or fall back to default data
-    //val points: DataSet[Point] = getPointDataSet(params, env)
-    //val centroids: DataSet[Centroid] = getCentroidDataSet(params, env)
     val points = nonLTETowers.map(x=> Point(x.lon, x.lat))
     val centroids = lteTowers.distinct(_.cell).first(k).map(x => Centroid(x.cell,x.lon,x.lat))
 
@@ -102,18 +98,6 @@ object KMeans {
 
   }
 
-  // *************************************************************************
-  //     UTIL FUNCTIONS
-  // *************************************************************************
-
-  def getCentroidDataSet(params: ParameterTool, env: ExecutionEnvironment): DataSet[Centroid] = {
-
-      env.readCsvFile[Centroid](
-        params.get("centroids"),
-        fieldDelimiter = " ",
-        includedFields = Array(0, 1, 2))
-
-  }
 
 // radio,mcc,net,area,cell,unit,lon,lat,range,samples,changeable,created,updated,averageSignal
 // UMTS,262,1,14256,2204760,0,13.381907,52.446789,1034,80,1,1380542105,1491834254,0
@@ -122,14 +106,6 @@ object KMeans {
                            lon: Double, lat: Double, range: Int, samples: Int, changeable: Int,
                            created: Int, updated: Int, averageSignal: Int )
 
-  def getPointDataSet(params: ParameterTool, env: ExecutionEnvironment): DataSet[Point] = {
-
-    env.readCsvFile[Point](
-        params.get("points"),
-        fieldDelimiter = " ",
-        includedFields = Array(0, 1))
-
-  }
 
   // *************************************************************************
   //     DATA TYPES
