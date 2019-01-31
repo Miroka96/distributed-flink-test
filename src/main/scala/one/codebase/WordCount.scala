@@ -1,6 +1,7 @@
 package one.codebase
 
 import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.core.fs.FileSystem
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -19,7 +20,6 @@ object WordCount {
     // get the execution environment
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime)
-
     // get input data by connecting to the socket
     val text = env.readTextFile(inputFile)
     // parse the data, group it, window it, and aggregate the counts 
@@ -33,7 +33,7 @@ object WordCount {
 
     // print the results with a single thread, rather than in parallel
     windowCounts.print().setParallelism(1)
-    windowCounts.writeAsCsv(outputFile).setParallelism(1)
+    windowCounts.writeAsCsv(outputFile, writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
 
     env.execute("WordCount")
   }
