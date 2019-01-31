@@ -5,6 +5,7 @@ import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.core.fs.FileSystem
 import org.apache.flink.streaming.api.scala._
 
 import scala.collection.JavaConverters._
@@ -109,7 +110,7 @@ object KMeans {
 
     println("Printing result to stdout. Use --output to specify output path.")
     clusteredPoints.print()
-    clusteredPoints.writeAsCsv(output, "\n", ",").setParallelism(1)
+    clusteredPoints.writeAsCsv(output, "\n", ",",writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
 //    grouped.print()
 //    grouped.writeAsCsv(output, "\n", ",").setParallelism(1)
     env.execute("Scala KMeans Example")
