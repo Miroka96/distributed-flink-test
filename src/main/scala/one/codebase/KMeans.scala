@@ -60,6 +60,11 @@ object KMeans {
 
     // checking input parameters
     val params: ParameterTool = ParameterTool.fromArgs(args)
+    val input = params.get("input", "berlin.csv")
+    val iterations = params.getInt("iterations", 10)
+    val mnc = params.get("mnc","").split(",").map(_.toInt)
+    var k = params.getInt("k",0) // Todo: replace with number of lte towers if 0
+    val output = params.get("output", "clusters.csv")
 
     // set up execution environment
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
