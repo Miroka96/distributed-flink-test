@@ -92,7 +92,7 @@ object KMeans {
     val clusteredPoints: DataSet[(Int, Point)] =
       points.map(new SelectNearestCenter).withBroadcastSet(finalCentroids, "centroids")
 
-    clusteredPoints.print()
+    //clusteredPoints.print()
     clusteredPoints.writeAsCsv(output, "\n", ",",writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
     env.execute("Scala KMeans Example")
 

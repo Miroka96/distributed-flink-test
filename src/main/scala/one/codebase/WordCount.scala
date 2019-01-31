@@ -32,7 +32,7 @@ object WordCount {
 
 
     // print the results with a single thread, rather than in parallel
-    windowCounts.print().setParallelism(1)
+    //windowCounts.print().setParallelism(1)
     windowCounts.writeAsCsv(outputFile, writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
 
     env.execute("WordCount")
