@@ -67,19 +67,28 @@ object KMeans {
       case x: String => List(x.toInt)
       case _ => List()
     }
-    var k = params.getInt("k",0) // Todo: replace with number of lte towers if 0
+    var k = params.getInt("k",0)
     val output = params.get("output", "clusters.csv")
 
     // set up execution environment
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
     val cellTowers = env.readCsvFile[CellTowerData](input)
 
+    // Todo: Exercise says mnc but data has mcc
+    val mncFilteredTowers = cellTowers.filter(x => if (mnc.nonEmpty) mnc.contains(x.mcc) else true)
+    val nonLTETowers = mncFilteredTowers.filter(t => t.radio != "LTE")
+    val lteTowers = mncFilteredTowers.filter(t => t.radio == "LTE")
+    k = if (k==0) lteTowers.count().toInt else k
+
+
+
+
     // get input data:
     // read the points and centroids from the provided paths or fall back to default data
     val points: DataSet[Point] = getPointDataSet(params, env)
     val centroids: DataSet[Centroid] = getCentroidDataSet(params, env)
 
-    val finalCentroids = centroids.iterate(params.getInt("iterations", 10)) { currentCentroids =>
+    val finalCentroids = centroids.iterate(iterations) { currentCentroids =>
       val newCentroids = points
         .map(new SelectNearestCenter).withBroadcastSet(currentCentroids, "centroids")
         .map { x => (x._1, x._2, 1L) }.withForwardedFields("_1; _2")
@@ -93,7 +102,7 @@ object KMeans {
       points.map(new SelectNearestCenter).withBroadcastSet(finalCentroids, "centroids")
 
     if (params.has("output")) {
-      clusteredPoints.writeAsCsv(params.get("output"), "\n", " ")
+      clusteredPoints.writeAsCsv(params.get("output"), "\n", ",")
       env.execute("Scala KMeans Example")
     } else {
       println("Printing result to stdout. Use --output to specify output path.")
