@@ -62,12 +62,17 @@ object KMeans {
     val params: ParameterTool = ParameterTool.fromArgs(args)
     val input = params.get("input", "berlin.csv")
     val iterations = params.getInt("iterations", 10)
-    val mnc = params.get("mnc","").split(",").map(_.toInt)
+    val mnc = params.get("mnc", "").split(",").flatMap {
+      case "" => List()
+      case x: String => List(x.toInt)
+      case _ => List()
+    }
     var k = params.getInt("k",0) // Todo: replace with number of lte towers if 0
     val output = params.get("output", "clusters.csv")
 
     // set up execution environment
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
+    val cellTowers = env.readCsvFile[CellTowerData](input)
 
     // get input data:
     // read the points and centroids from the provided paths or fall back to default data
@@ -109,6 +114,11 @@ object KMeans {
         includedFields = Array(0, 1, 2))
 
   }
+
+
+  case class CellTowerData(radio: String, mcc: Int, net: Int, area: Int, cell: Int, unit: Int,
+                           lon: Double, lat: Double, range: Int, samples: Int, changeable: Int,
+                           created: Int, updated: Int, averageSignal: Int )
 
   def getPointDataSet(params: ParameterTool, env: ExecutionEnvironment): DataSet[Point] = {
 
