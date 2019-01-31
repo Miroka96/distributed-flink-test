@@ -41,14 +41,7 @@ import scala.collection.JavaConverters._
  * For example `"1 6.2 3.2\n2 2.9 5.7\n"` gives two centers (id=1, x=6.2,
  * y=3.2) and (id=2, x=2.9, y=5.7).
  *
- * Usage:
- * {{{
- *   KMeans --points <path> --centroids <path> --output <path> --iterations <n>
- * }}}
- * If no parameters are provided, the program is run with default data from
- * [[org.apache.flink.examples.java.clustering.util.KMeansData]]
- * and 10 iterations.
- *
+
  * This example shows how to use:
  *
  * - Bulk iterations
@@ -106,13 +99,9 @@ object KMeans {
     val clusteredPoints: DataSet[(Int, Point)] =
       points.map(new SelectNearestCenter).withBroadcastSet(finalCentroids, "centroids")
 
-    val grouped = clusteredPoints.groupBy(0).reduce((a,b) => b)
-
     println("Printing result to stdout. Use --output to specify output path.")
     clusteredPoints.print()
     clusteredPoints.writeAsCsv(output, "\n", ",",writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
-//    grouped.print()
-//    grouped.writeAsCsv(output, "\n", ",").setParallelism(1)
     env.execute("Scala KMeans Example")
 
   }
