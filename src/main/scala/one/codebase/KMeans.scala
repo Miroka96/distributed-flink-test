@@ -67,7 +67,7 @@ object KMeans {
       case x: String => List(x.toInt)
       case _ => List()
     }
-    var k = params.getInt("k",0)
+    var k = params.getInt("k",10)
     val output = params.get("output", "clusters.csv")
 
     // set up execution environment
@@ -89,7 +89,7 @@ object KMeans {
     //val points: DataSet[Point] = getPointDataSet(params, env)
     //val centroids: DataSet[Centroid] = getCentroidDataSet(params, env)
     val points = nonLTETowers.map(x=> Point(x.lon, x.lat))
-    val centroids = lteTowers.first(k).map(x => Centroid(x.unit,x.lon,x.lat))
+    val centroids = lteTowers.distinct(_.cell).first(k).map(x => Centroid(x.cell,x.lon,x.lat))
 
 
     val finalCentroids = centroids.iterate(iterations) { currentCentroids =>
@@ -128,7 +128,9 @@ object KMeans {
 
   }
 
-
+// radio,mcc,net,area,cell,unit,lon,lat,range,samples,changeable,created,updated,averageSignal
+// UMTS,262,1,14256,2204760,0,13.381907,52.446789,1034,80,1,1380542105,1491834254,0
+// LTE,262,1,1495,26355458,0,13.404399,52.468679,4219,32,1,1380624391,1519322301,0
   case class CellTowerData(radio: String, mcc: Int, net: Int, area: Int, cell: Int, unit: Int,
                            lon: Double, lat: Double, range: Int, samples: Int, changeable: Int,
                            created: Int, updated: Int, averageSignal: Int )
