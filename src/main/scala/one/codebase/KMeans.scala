@@ -72,7 +72,7 @@ object KMeans {
 
     // set up execution environment
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
-    val cellTowers = env.readCsvFile[CellTowerData](input)
+    val cellTowers = env.readCsvFile[CellTowerData](input, ignoreFirstLine = true)
 
     // Todo: Exercise says mnc but data has mcc
     val mncFilteredTowers = cellTowers.filter(x => if (mnc.nonEmpty) mnc.contains(x.mcc) else true)
@@ -83,10 +83,14 @@ object KMeans {
 
 
 
+
     // get input data:
     // read the points and centroids from the provided paths or fall back to default data
-    val points: DataSet[Point] = getPointDataSet(params, env)
-    val centroids: DataSet[Centroid] = getCentroidDataSet(params, env)
+    //val points: DataSet[Point] = getPointDataSet(params, env)
+    //val centroids: DataSet[Centroid] = getCentroidDataSet(params, env)
+    val points = nonLTETowers.map(x=> Point(x.lon, x.lat))
+    val centroids = lteTowers.first(k).map(x => Centroid(x.unit,x.lon,x.lat))
+
 
     val finalCentroids = centroids.iterate(iterations) { currentCentroids =>
       val newCentroids = points
