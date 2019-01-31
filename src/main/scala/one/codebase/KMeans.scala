@@ -67,7 +67,7 @@ object KMeans {
       case x: String => List(x.toInt)
       case _ => List()
     }
-    var k = params.getInt("k",10)
+    var k = params.getInt("k",0)
     val output = params.get("output", "clusters.csv")
 
     // set up execution environment
@@ -75,7 +75,7 @@ object KMeans {
     val cellTowers = env.readCsvFile[CellTowerData](input, ignoreFirstLine = true)
 
     // Todo: Exercise says mnc but data has mcc
-    val mncFilteredTowers = cellTowers.filter(x => if (mnc.nonEmpty) mnc.contains(x.mcc) else true)
+    val mncFilteredTowers = cellTowers.filter(x => if (mnc.nonEmpty) mnc.contains(x.net) else true)
     val nonLTETowers = mncFilteredTowers.filter(t => t.radio != "LTE")
     val lteTowers = mncFilteredTowers.filter(t => t.radio == "LTE")
     k = if (k==0) lteTowers.count().toInt else k
@@ -105,13 +105,14 @@ object KMeans {
     val clusteredPoints: DataSet[(Int, Point)] =
       points.map(new SelectNearestCenter).withBroadcastSet(finalCentroids, "centroids")
 
-    if (params.has("output")) {
-      clusteredPoints.writeAsCsv(params.get("output"), "\n", ",")
-      env.execute("Scala KMeans Example")
-    } else {
-      println("Printing result to stdout. Use --output to specify output path.")
-      clusteredPoints.print()
-    }
+    val grouped = clusteredPoints.groupBy(0).reduce((a,b) => b)
+
+    println("Printing result to stdout. Use --output to specify output path.")
+    clusteredPoints.print()
+    clusteredPoints.writeAsCsv(output, "\n", ",").setParallelism(1)
+//    grouped.print()
+//    grouped.writeAsCsv(output, "\n", ",").setParallelism(1)
+    env.execute("Scala KMeans Example")
 
   }
 
@@ -178,7 +179,7 @@ object KMeans {
     }
 
     override def toString: String =
-      s"$x $y"
+      s"$x,$y"
 
   }
 
