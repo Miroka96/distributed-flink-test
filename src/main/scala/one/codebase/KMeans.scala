@@ -74,10 +74,6 @@ object KMeans {
     val lteTowers = mncFilteredTowers.filter(t => t.radio == "LTE")
     k = if (k==0) lteTowers.count().toInt else k
 
-
-
-
-
     // get input data:
     // read the points and centroids from the provided paths or fall back to default data
     //val points: DataSet[Point] = getPointDataSet(params, env)
@@ -99,7 +95,6 @@ object KMeans {
     val clusteredPoints: DataSet[(Int, Point)] =
       points.map(new SelectNearestCenter).withBroadcastSet(finalCentroids, "centroids")
 
-    println("Printing result to stdout. Use --output to specify output path.")
     clusteredPoints.print()
     clusteredPoints.writeAsCsv(output, "\n", ",",writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
     env.execute("Scala KMeans Example")
