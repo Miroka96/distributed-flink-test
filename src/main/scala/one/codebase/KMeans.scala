@@ -66,6 +66,7 @@ object KMeans {
 
     // set up execution environment
     val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(4)
     val cellTowers = env.readCsvFile[CellTowerData](input, ignoreFirstLine = true)
 
     // Todo: Exercise says mnc but data has mcc
