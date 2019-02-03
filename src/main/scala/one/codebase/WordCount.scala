@@ -10,8 +10,6 @@ import org.apache.flink.streaming.api.windowing.time.Time
 object WordCount {
 
   def main(args: Array[String]): Unit = {
-
-
     val params = ParameterTool.fromArgs(args)
     val inputFile = params.get("input", "tolstoy-war-and-peace.txt")
     val outputFile = params.get("output", "count.csv")

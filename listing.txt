@@ -1,0 +1,77 @@
+# preparing a Kubernetes cluster, again...
+# it seems to be impossible to recover a failed cluster
+
+# restored the snapshotted VMs from last time (before the Kubernetes installation)
+# install updates
+ansible all -m raw -i hosts.ini -a "sudo apt update"
+ansible all -m raw -i hosts.ini -a "sudo apt upgrade -y"
+
+#### install kubernetes ####
+ansible-playbook -i hosts.ini --become --become-user=root kubespray/cluster.yml
+
+
+
+# now working as root on node1: ssh meth@node1 -> sudo su
+
+#### install helm ####
+snap install helm --classic
+/snap/bin/helm init
+kubectl get pods --namespace kube-system
+# found pod: tiller-deploy-f54b67464-lx6g9             1/1     Running   0
+/snap/bin/helm version
+# Client: &version.Version{SemVer:"v2.12.3", GitCommit:"eecf22f77df5f65c823aacd2dbd30ae6c65f186e", GitTreeState:"clean"}
+# Server: &version.Version{SemVer:"v2.12.3", GitCommit:"eecf22f77df5f65c823aacd2dbd30ae6c65f186e", GitTreeState:"clean"}
+
+# grant permissions to tiller/helm
+kubectl create serviceaccount --namespace kube-system tiller
+kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+
+#### install hadoop ####
+/snap/bin/helm install --name hadoop --set yarn.nodeManager.resources.limits.memory=2048Mi --set yarn.nodeManager.replicas=1 stable/hadoop
+kubectl get pods
+# hadoop-hadoop-hdfs-dn-0             1/1     Running   2          18h
+# hadoop-hadoop-hdfs-nn-0             1/1     Running   0          18h
+# hadoop-hadoop-yarn-nm-0             1/1     Running   2          18h
+# hadoop-hadoop-yarn-rm-0             1/1     Running   0          18h
+
+
+#### install flink ####
+# next statement is run on the host machine
+scp *.yaml meth@node1:
+# following is run again as root on node1
+kubectl create -f jobmanager-service.yaml
+kubectl create -f jobmanager-deployment.yaml
+kubectl create -f taskmanager-deployment.yaml
+
+# and back on host machine
+ssh -L 8001:127.0.0.1:8001 meth@node1 sudo -i kubectl proxy
+# flink UI is now available here: http://localhost:8001/api/v1/namespaces/default/services/flink-jobmanager:ui/proxy/
+
+#### copy data to hdfs
+# running on the host system
+scp tolstoy-war-and-peace.txt meth@node1:
+scp berlin.csv meth@node1:
+
+# running as root on node1: ssh meth@node1 -> sudo su
+POD_NAME=$(kubectl get pods | grep yarn-nm | awk '{print $1}')
+kubectl cp tolstoy-war-and-peace.txt "${POD_NAME}":/home
+kubectl cp berlin.csv "${POD_NAME}":/home
+kubectl exec -it "${POD_NAME}" bash
+# now working inside the hadoop namenode pod
+cd /home
+/usr/local/hadoop/bin/hadoop fs -put tolstoy-war-and-peace.txt /
+/usr/local/hadoop/bin/hadoop fs -put berlin.csv /
+
+### needed to reboot some machines
+## fixing the hard way
+# inside the node as root
+echo "d /tmp/ - - - 20d" > /etc/tmpfiles.d/tmp.conf
+reboot now
+# afterwards on the host system (inside the old project)
+# grant permissions for future requests
+sudo whoami
+ansible-playbook -i hosts.ini --become --become-user=root kubespray/scale.yml
+
+## make machines rebootable in general: disable swap
+# comment the swap line in /etc/fstab

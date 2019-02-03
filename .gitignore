@@ -4,7 +4,8 @@
 *.log
 
 .idea/
-distributed-flink-test.iml
+*.iml
 target/
 *.csv
 dependency-reduced-pom.xml
+*.csv.gz
