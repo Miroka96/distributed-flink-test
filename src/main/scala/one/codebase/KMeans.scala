@@ -95,7 +95,6 @@ object KMeans {
     //clusteredPoints.print()
     clusteredPoints.writeAsCsv(output, "\n", ",",writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
     env.execute("Scala KMeans Example")
-
   }
 
 

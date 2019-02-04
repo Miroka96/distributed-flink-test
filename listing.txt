@@ -55,15 +55,31 @@ scp berlin.csv meth@node1:
 
 # running as root on node1: ssh meth@node1 -> sudo su
 POD_NAME=$(kubectl get pods | grep yarn-nm | awk '{print $1}')
+# hadoop-hadoop-yarn-nm-0
+
+# copy the data onto the pod
 kubectl cp tolstoy-war-and-peace.txt "${POD_NAME}":/home
 kubectl cp berlin.csv "${POD_NAME}":/home
+
+# run a shell in the pod
 kubectl exec -it "${POD_NAME}" bash
 # now working inside the hadoop namenode pod
 cd /home
+# now actually copy the data into the hdfs
 /usr/local/hadoop/bin/hadoop fs -put tolstoy-war-and-peace.txt /
 /usr/local/hadoop/bin/hadoop fs -put berlin.csv /
+# grant general permissions for the data
+/usr/local/hadoop/bin/hadoop fs -chmod -R 777 /
 
-### needed to reboot some machines
+### run the JARs on Flink
+# open the Flink UI like before
+## Wordcount
+# program arguments: --input hdfs://hadoop-hadoop-hdfs-nn:9000/tolstoy-war-and-peace.txt --output hdfs://hadoop-hadoop-hdfs-nn:9000/counts.csv
+## KMeans
+# program arguments: --input hdfs://hadoop-hadoop-hdfs-nn:9000/berlin.csv --output hdfs://hadoop-hadoop-hdfs-nn:9000/clusters.csv
+
+
+### intermediate steps: needed to reboot some machines
 ## fixing the hard way
 # inside the node as root
 echo "d /tmp/ - - - 20d" > /etc/tmpfiles.d/tmp.conf
