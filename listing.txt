@@ -77,7 +77,7 @@ cd /home
 # program arguments: --input hdfs://hadoop-hadoop-hdfs-nn:9000/tolstoy-war-and-peace.txt --output hdfs://hadoop-hadoop-hdfs-nn:9000/counts.csv
 ## KMeans
 # program arguments: --input hdfs://hadoop-hadoop-hdfs-nn:9000/berlin.csv --output hdfs://hadoop-hadoop-hdfs-nn:9000/clusters.csv
-
+# not runnable via web interface... it seems to read from the hdfs, but does not produce any output file. In addition, the job name and the execution plan differ from what is expected.
 
 ### intermediate steps: needed to reboot some machines
 ## fixing the hard way
