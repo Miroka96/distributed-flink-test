@@ -10,6 +10,9 @@ thread will have to be send to a specific thread for sum aggregation. So the pro
 (in this case because it is local inter thread communication) bound.
 
 
+On cluster:
+On the cluster this task was much more memory bound as our virtual machines had only very little memory. 
+
 ###### k-means
 
 Local execution on one machine.
@@ -27,3 +30,10 @@ Looking at the dashboard, the data already seems to be well partitioned
 by flink. In all. tasks each instance runs with a similar amount of data, only
  in one case when computing the distinct lte towers, on instance does not produce any results.  
 
+
+On cluster: 
+Unfortunately we could not get the Flink Dashboard to submit the task correctly. I did execute, however, the execution 
+differed from the usual one. We suspect that it had something to do with batch vs. stream processing and that because of 
+some dependency Flink thought it would be a stream processing job. Unfortunately, we could not narrow it down more.
+Ironically, flink run kmeans.jar worked locally with the same jar file, also showing the correct execution plan in the 
+dashboard.
